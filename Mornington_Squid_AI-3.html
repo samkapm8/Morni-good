@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0a1628">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Professional 48-hour southern calamari forecast for Mornington Pier, Port Phillip Bay.">
+<link rel="manifest" href="data:application/manifest+json,{"name":"Mornington Squid AI","short_name":"Squid AI","start_url":".","display":"standalone","background_color":"#0a1628","theme_color":"#0a1628","icons":[{"src":"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦑</text></svg>","sizes":"any","type":"image/svg+xml"}]}">
+<title>Mornington Squid AI</title>
+<style>
+:root{
+  --bg:#0a1628; --card:#12243a; --card2:#0d1c2e; --border:#1e3a55;
+  --text:#e8f1fa; --muted:#8aa4bc; --accent:#3dd68c; --warn:#e8b84a; --bad:#e86a6a;
+  --blue:#4a9eff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif;min-height:100dvh}
+main{max-width:920px;margin:0 auto;padding:16px 14px 48px}
+.header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.header h1{margin:0;font-size:1.35rem;font-weight:700;letter-spacing:-.02em}
+.header .sub{color:var(--muted);font-size:.8rem;margin-top:3px}
+.pill{font-size:.75rem;color:var(--muted);white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.card-title{font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.status-row{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.95rem}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot.ok{background:var(--accent)}.dot.wait{background:var(--warn)}.dot.bad{background:var(--bad)}
+.msg{color:var(--muted);font-size:.85rem;margin-top:6px}
+.sources{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.src{background:var(--card2);border-radius:8px;padding:8px 10px;font-size:.75rem}
+.src b{display:block;font-size:.8rem;margin-bottom:2px}
+.src.ok b{color:var(--accent)}.src.fail b{color:var(--bad)}.src.wait b{color:var(--warn)}
+.hero{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+.hero-score{text-align:center;min-width:110px}
+.hero-score .num{font-size:2.8rem;font-weight:800;line-height:1;letter-spacing:-.03em}
+.hero-score .lbl{font-size:.75rem;color:var(--muted);margin-top:2px}
+.bar{height:6px;background:var(--card2);border-radius:6px;overflow:hidden;margin:10px 0 0}
+.bar > i{display:block;height:100%;background:linear-gradient(90deg,#2bb673,var(--accent));border-radius:6px;transition:width .45s}
+.rec{margin-top:12px;padding:11px 13px;border-radius:8px;font-size:.9rem;font-weight:600;line-height:1.4}
+.rec.go{background:rgba(61,214,140,.12);border:1px solid rgba(61,214,140,.35);color:#7dffa8}
+.rec.maybe{background:rgba(232,184,74,.1);border:1px solid rgba(232,184,74,.35);color:#ffd97a}
+.rec.no{background:rgba(232,106,106,.1);border:1px solid rgba(232,106,106,.35);color:#ff9b9b}
+.why{color:var(--muted);font-size:.85rem;margin-top:6px;line-height:1.4}
+.table-wrap{overflow:auto;max-height:560px;-webkit-overflow-scrolling:touch;margin:0 -4px}
+table{width:100%;border-collapse:collapse;min-width:760px;font-size:.8rem}
+th{position:sticky;top:0;background:var(--card);text-align:left;padding:8px 6px;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+td{padding:8px 6px;border-bottom:1px solid rgba(30,58,85,.6);vertical-align:top}
+.pct{font-weight:800;font-size:.95rem}
+.g{color:var(--accent)}.y{color:var(--warn)}.r{color:var(--bad)}
+.tag{display:inline-block;background:var(--card2);border:1px solid var(--border);padding:2px 6px;border-radius:4px;font-size:.7rem;margin:1px 2px 1px 0;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.stat{background:var(--card2);border-radius:8px;padding:10px 12px}
+.stat .k{font-size:.72rem;color:var(--muted);font-weight:500}
+.stat .v{font-size:1rem;font-weight:700;margin-top:3px}
+.stat .note{font-size:.68rem;color:var(--muted);margin-top:3px;line-height:1.3}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px}
+button{appearance:none;border:1px solid var(--border);background:var(--card2);color:var(--text);padding:10px 14px;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer}
+button:active{transform:scale(.98)}
+.panel{display:none;margin-top:12px}
+.panel.show{display:block}
+.factor{padding:9px 0;border-bottom:1px solid var(--border);font-size:.82rem;line-height:1.5;color:var(--muted)}
+.factor b{color:var(--text)}
+.err{color:var(--bad);font-size:.8rem;margin-top:8px}
+.hint{background:rgba(74,158,255,.08);border:1px solid rgba(74,158,255,.25);border-radius:10px;padding:12px 14px;font-size:.82rem;line-height:1.45;margin-bottom:12px;color:var(--muted)}
+.hint b{color:var(--text)}
+.hint a{color:var(--blue)}
+.footer{font-size:.72rem;color:var(--muted);line-height:1.5;margin-top:8px}
+.settings label{display:block;font-size:.8rem;color:var(--muted);margin:8px 0 4px}
+.settings input{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:.95rem}
+@media(max-width:640px){
+  .sources{grid-template-columns:1fr 1fr}
+  .hero{grid-template-columns:1fr}
+  .hero-score{text-align:left;display:flex;align-items:baseline;gap:10px}
+  .hero-score .num{font-size:2.2rem}
+  .stats{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<main>
+<div class="hint" id="installHint">
+  <b>Hosting tip (Android)</b><br>
+  Data only loads over http/https. Use a free permanent host: create a free Netlify account and deploy the file, or use Tiiny Host / Cloudflare Pages. Then Add to Home screen.
+</div>
+
+<header class="header">
+  <div>
+    <h1>Mornington Squid AI</h1>
+    <div class="sub">48-hour southern calamari model · Mornington Pier, Port Phillip Bay</div>
+  </div>
+  <div class="pill" id="updated">—</div>
+</header>
+
+<section class="card">
+  <div class="status-row"><span id="dot" class="dot wait"></span><span id="status">Loading…</span></div>
+  <div class="msg" id="message">Connecting to live weather and marine feeds.</div>
+  <div class="sources">
+    <div id="weather" class="src wait"><b>Weather</b><span>…</span></div>
+    <div id="marine" class="src wait"><b>Marine</b><span>…</span></div>
+    <div id="tide" class="src wait"><b>Tide proxy</b><span>…</span></div>
+    <div id="astronomy" class="src ok"><b>Sun / Moon</b><span>Local</span></div>
+  </div>
+  <div id="errors" class="err"></div>
+</section>
+
+<section class="card">
+  <div class="card-title">Best window · next 48 hours</div>
+  <div class="hero">
+    <div>
+      <div id="bestTime" style="font-size:1.15rem;font-weight:700">—</div>
+      <div class="why" id="bestWhy">—</div>
+      <div id="recommendation" class="rec maybe" style="display:none"></div>
+    </div>
+    <div class="hero-score">
+      <div class="num" id="bestPct">—</div>
+      <div class="lbl">model score</div>
+    </div>
+  </div>
+  <div class="bar"><i id="bar" style="width:0"></i></div>
+</section>
+
+<section class="card">
+  <div class="card-title">Hourly forecast</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Score</th>
+          <th>Light</th>
+          <th>Tide</th>
+          <th>Wind</th>
+          <th>Sea</th>
+          <th>SST</th>
+          <th>Water clarity</th>
+          <th>Key drivers</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-title">Current conditions</div>
+  <div class="stats" id="stats"></div>
+</section>
+
+<section class="card">
+  <div class="btn-row">
+    <button id="refreshBtn">↻ Refresh</button>
+    <button id="factorBtn">How the model works</button>
+    <button id="settingsBtn">Location settings</button>
+  </div>
+  <div id="factors" class="panel">
+    <div class="factor"><b>Water clarity (most important)</b> — Southern calamari are visual hunters. Clarity is estimated from rain, onshore wind, waves/swell and current. Dirty water is the #1 session killer in Port Phillip Bay.</div>
+    <div class="factor"><b>Light windows</b> — First light (dawn + ~90 min) is the strongest single window. Dusk and early night under pier lights are also heavily favoured. Deep night is useful but slightly less than the early pier-light period. Midday is penalised in shallow water.</div>
+    <div class="factor"><b>Tide behaviour</b> — Explicit preference for early flood (rising tide while still near high) plus slack-to-high. Strong runs hurt jig presentation around structure.</div>
+    <div class="factor"><b>Classic alignment bonus</b> — The model specifically rewards light-change periods that line up with good tide movement (the sessions locals talk about). Rising tide into dusk/dawn in clear water receives the strongest lift.</div>
+    <div class="factor"><b>Temperature vs clarity</b> — Lab work shows higher attack rates when warmer, but real PPB results are driven more by clear cooler water. The model gives a mild predatory-drive lift around mid-teens SST while still letting clarity dominate.</div>
+    <div class="factor"><b>Night under lights vs pure darkness</b> — Early night (roughly 19:30–22:30) is treated as a pier-light window and scores higher than the middle of the night. Darker moons help concentrate activity under the lights.</div>
+    <div class="factor"><b>Wind & fishability</b> — Light wind is best for line control and feel. Onshore wind both dirties water and makes the pier less pleasant. Strong wind + poor clarity triggers hard “stay home” gates.</div>
+    <div class="factor"><b>Honest limits</b> — Transparent behavioural heuristic grounded in local knowledge and published southern calamari research. Not a calibrated scientific forecast. Marine sea level is a model proxy. Always check actual water colour on arrival.</div>
+  </div>
+  <div id="settings" class="panel settings">
+    <label>Latitude</label>
+    <input id="lat" value="-38.2167" inputmode="decimal">
+    <label>Longitude</label>
+    <input id="lon" value="145.0333" inputmode="decimal">
+    <label>Shore-facing direction (° true)</label>
+    <input id="shore" value="145" inputmode="numeric">
+    <button id="saveBtn" style="margin-top:10px;width:100%">Save & refresh</button>
+    <p class="footer" style="margin-top:8px">Default = Mornington Pier. Shore direction is used to calculate onshore wind (affects water colour and comfort).</p>
+  </div>
+</section>
+
+<p class="footer">
+  Live data from Open-Meteo (weather + marine). Local sun/moon calculation. Model synthesises Port Phillip Bay / Mornington Pier knowledge for southern calamari. Planning tool only.
+</p>
+</main>
+
+<script>
+'use strict';
+const TZ='Australia/Melbourne', LATKEY='sq_lat', LONKEY='sq_lon', SHOREKEY='sq_shore';
+const $=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const rad=d=>d*Math.PI/180;
+
+function cfg(){return{lat:+localStorage.getItem(LATKEY)||-38.2167,lon:+localStorage.getItem(LONKEY)||145.0333,shore:+localStorage.getItem(SHOREKEY)||145}}
+
+function setSrc(id,state,text){
+  const e=$(id);
+  e.className='src '+state;
+  e.querySelector('span').textContent=text;
+}
+function setStatus(kind,title,msg){
+  $('dot').className='dot '+(kind==='ok'?'ok':kind==='bad'?'bad':'wait');
+  $('status').textContent=title;
+  $('message').textContent=msg;
+}
+
+async function fetchJSON(url){
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),16000);
+  try{
+    const r=await fetch(url,{cache:'no-store',mode:'cors',signal:ctrl.signal});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    if(j.error)throw new Error(j.reason||'API error');
+    return j;
+  }catch(e){
+    const msg=(e&&e.name==='AbortError')?'timeout':(e&&e.message)||'network error';
+    if(/Failed to fetch|NetworkError|Load failed|CORS/i.test(msg)||location.protocol==='file:'){
+      throw new Error('Browser blocked the request (common with local files). Host the file on Netlify / Tiiny / Cloudflare Pages.');
+    }
+    throw new Error(msg);
+  }finally{clearTimeout(timer)}
+}
+
+function sun(date,lat,lon){
+  const n=Math.floor((Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate())-Date.UTC(date.getUTCFullYear(),0,0))/86400000);
+  const lng=lon/15;
+  function f(rise){
+    let t=n+((rise?6:18)-lng)/24;
+    let M=.9856*t-3.289;
+    let L=(M+1.916*Math.sin(rad(M))+.020*Math.sin(rad(2*M))+282.634)%360;
+    let RA=(Math.atan(.91764*Math.tan(rad(L)))*180/Math.PI+360)%360;
+    const Lq=Math.floor(L/90)*90,Rq=Math.floor(RA/90)*90;
+    RA=(RA+Lq-Rq)/15;
+    const sd=.39782*Math.sin(rad(L)),cd=Math.cos(Math.asin(sd));
+    const ch=(Math.cos(rad(90.833))-sd*Math.sin(rad(lat)))/(cd*Math.cos(rad(lat)));
+    if(ch>1||ch<-1)return null;
+    const H=(rise?360-Math.acos(ch)*180/Math.PI:Math.acos(ch)*180/Math.PI)/15;
+    const ut=H+RA-.06571*t-6.622-lng;
+    const base=Date.UTC(date.getUTCFullYear(),date.getUTCMonth(),date.getUTCDate());
+    return new Date(base+((ut+24)%24)*3600000);
+  }
+  return{rise:f(true),set:f(false)};
+}
+
+function moonIllum(d){
+  let p=((d.getTime()/86400000+2440587.5-2451550.25972)/29.530588853)%1;
+  if(p<0)p+=1;
+  return(1-Math.cos(2*Math.PI*p))/2;
+}
+function angDiff(a,b){return Math.abs(((a-b+180)%360)-180)}
+function nearestHigh(time,times,vals){
+  let best=99;
+  if(!vals||vals.length<3)return best;
+  for(let i=1;i<vals.length-1;i++){
+    if(vals[i]>=vals[i-1]&&vals[i]>=vals[i+1])
+      best=Math.min(best,Math.abs(time-times[i])/3600000);
+  }
+  return best;
+}
+function seasonalFactor(date){
+  return[0.52,0.48,0.58,0.78,0.93,1.00,0.97,0.88,0.72,0.68,0.58,0.53][date.getMonth()];
+}
+function lightScore(t,lat,lon){
+  const s=sun(t,lat,lon);
+  const dawnHrs=s.rise?Math.abs(t-s.rise)/3600000:9;
+  const duskHrs=s.set?Math.abs(t-s.set)/3600000:9;
+  const h=t.getHours()+t.getMinutes()/60;
+  // First light is the single strongest window (dawn + ~90 min)
+  const nearDawn=Math.max(0,1-dawnHrs/1.5);
+  // Last light / dusk also strong
+  const nearDusk=Math.max(0,1-duskHrs/1.4);
+  // Early night under pier lights (roughly 19:30–22:30) is valuable; deep night slightly less
+  const earlyNight=(h>=19.3&&h<22.8)?0.78:(h>=22.8||h<5.2)?0.55:0;
+  const midday=(h>9.5&&h<15.5)?0.32:0;
+  return clamp(0.10+0.92*Math.max(nearDawn,nearDusk)+0.28*earlyNight-midday);
+}
+function fmtDir(d){
+  const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(d/22.5)%16];
+}
+
+function makeRows(w,m,c){
+  const wh=w.hourly, mh=m?.hourly||{};
+  const times=wh.time.map(t=>new Date(t));
+  let start=Math.max(0,times.findIndex(t=>t.getTime()>=Date.now()-25*60000));
+  if(start<0)start=0;
+  const end=Math.min(start+48,times.length);
+  const rows=[]; let best=null;
+  const pressures=wh.surface_pressure||[];
+
+  for(let i=start;i<end;i++){
+    const t=times[i];
+    const light=lightScore(t,c.lat,c.lon);
+    const illum=moonIllum(t);
+    const season=seasonalFactor(t);
+    const isNight=t.getHours()>=19||t.getHours()<6;
+
+    const tide=+(mh.sea_level_height_msl?.[i]??0);
+    const prev=+(mh.sea_level_height_msl?.[Math.max(0,i-1)]??tide);
+    const next=+(mh.sea_level_height_msl?.[Math.min(i+1,(mh.sea_level_height_msl?.length||1)-1)]??tide);
+    const slope=next-prev;
+    const highHrs=nearestHigh(t,times,mh.sea_level_height_msl||[]);
+    const highProx=Math.exp(-Math.pow(highHrs/2.7,2));
+    const slackish=clamp(1-Math.abs(slope)/0.11);
+    const phase=slope>0.018?'rising':slope<-0.018?'falling':'slack';
+
+    const wind=+(wh.wind_speed_10m?.[i]??0);
+    const gust=+(wh.wind_gusts_10m?.[i]??wind);
+    const wd=+(wh.wind_direction_10m?.[i]??0);
+    const onshore=clamp(1-angDiff(wd,c.shore)/90);
+    const windComfort=clamp(1-wind/26)*clamp(1-gust/38);
+    const windClarityHit=onshore*clamp(wind/20);
+
+    const wave=+(mh.wave_height?.[i]??0);
+    const period=+(mh.wave_period?.[i]??0);
+    const swell=+(mh.swell_wave_height?.[i]??0);
+    const cur=+(mh.ocean_current_velocity?.[i]??0);
+    const sst=+(mh.sea_surface_temperature?.[i]??15);
+
+    const rain=+(wh.precipitation?.[i]??0);
+    const precipProb=+(wh.precipitation_probability?.[i]??0)/100;
+    const pressure=+(wh.surface_pressure?.[i]??1013);
+    const prevP=+(pressures[Math.max(0,i-3)]??pressure);
+    const pTrend=pressure-prevP;
+    const cloud=+(wh.cloud_cover?.[i]??50)/100;
+    const vis=+(wh.visibility?.[i]??20000);
+    const airT=+(wh.temperature_2m?.[i]??15);
+    const apparent=+(wh.apparent_temperature?.[i]??airT);
+
+    const rainHit=clamp(rain/3.2+precipProb*0.55);
+    const waveHit=clamp((wave+0.55*swell)/1.55);
+    const curHit=clamp(cur/5.2);
+    const clarity=clamp(1-(0.42*rainHit+0.32*windClarityHit+0.20*waveHit+0.08*curHit));
+
+    const sstScore=clamp(1-Math.abs(sst-14.2)/6.8);
+    const marine=clamp(1-wave*0.26-cur*0.07)+clamp(period/11)*0.06;
+    const pressureScore=clamp(0.5+0.5*(pTrend>-1.2?1:0.35)-Math.abs(pTrend)*0.025);
+    const cloudHelp=(light<0.38&&cloud>0.5)?0.07:0;
+    const moonScore=isNight?(1-illum*0.5):0.65;
+    const visScore=clamp(vis/14000);
+
+    // Early-flood specific preference (rising + reasonably close to high)
+    const earlyFlood = (phase==='rising' && highProx>0.25) ? clamp(0.35+0.65*highProx) : 0;
+    // Classic "light change + tide movement" alignment
+    const classicWindow = light * Math.max(highProx, earlyFlood, slackish*0.85);
+
+    // Temperature vs clarity trade-off:
+    // Lab work shows higher attack rates when warmer, but real PPB success is clarity-driven in cooler months.
+    // Give a small predatory-drive lift when SST is milder, but never let it override poor clarity.
+    const tempDrive = clamp(1-Math.abs(sst-16.5)/9) * 0.55 + 0.45; // soft peak ~16–17°C
+    const sstBehaviour = sstScore*0.65 + tempDrive*0.35;
+
+    let raw=-1.35
+      +1.95*light
+      +1.70*clarity
+      +0.85*highProx
+      +0.55*earlyFlood          // explicit early-flood weight
+      +0.38*slackish
+      +0.52*windComfort
+      +0.30*marine
+      +0.22*sstBehaviour        // clarity-aware temperature logic
+      +0.18*season
+      +0.14*moonScore
+      +0.11*pressureScore
+      +0.07*cloudHelp
+      +0.05*visScore
+      -0.92*clamp(wind/28)
+      -0.28*clamp(gust/40)
+      -0.40*precipProb
+      -0.22*clamp(rain/1.8);
+
+    // Behavioural interactions
+    raw += 0.42*light*clarity;           // low light is far more valuable in clear water
+    raw += 0.32*highProx*clarity;
+    raw += 0.28*classicWindow;           // light change lining up with tide movement
+    raw += 0.16*earlyFlood*clarity;
+    raw += 0.12*clarity*windComfort;
+    raw += 0.10*light*earlyFlood;        // rising tide into the light change
+
+    let p=clamp((1/(1+Math.exp(-raw)))*100,3,97);
+
+    // Stronger classic-window bonuses (the sessions locals talk about)
+    if(light>0.55 && clarity>0.70 && (highProx>0.40||earlyFlood>0.45) && wind<17)
+      p=Math.min(97,p+6);
+    if(light>0.68 && clarity>0.78 && earlyFlood>0.5 && wind<14)
+      p=Math.min(97,p+5);               // rising tide into dusk/dawn in clear water
+    if(isNight && light>0.4 && clarity>0.65 && illum<0.35 && wind<16)
+      p=Math.min(96,p+3);               // darker night under pier lights
+
+    // Hard common-sense gates
+    if(clarity<0.28)p=Math.min(p,32);
+    if(clarity<0.18)p=Math.min(p,18);
+    if(wind>28&&onshore>0.6)p=Math.min(p,28);
+    if(wind>35)p=Math.min(p,22);
+    if(rain>2||precipProb>0.75)p=Math.min(p,30);
+    if(wave>1.6||swell>1.4)p=Math.min(p,35);
+
+    const why=[];
+    if(light>0.65)why.push('prime light');
+    else if(light>0.38)why.push('usable light');
+    if(clarity>0.78)why.push('excellent clarity');
+    else if(clarity>0.55)why.push('ok clarity');
+    else if(clarity<0.35)why.push('dirty risk');
+    if(earlyFlood>0.5)why.push('early flood');
+    else if(highProx>0.55)why.push('near high');
+    if(slackish>0.72)why.push('slack-ish');
+    if(classicWindow>0.45)why.push('light+tide aligned');
+    if(wind<11)why.push('light wind');
+    else if(wind>22)why.push('windy');
+    if(onshore>0.65&&wind>13)why.push('onshore');
+    if(wave>1.05||swell>0.95)why.push('elevated sea');
+    if(cur>3.8)why.push('current');
+    if(isNight&&illum<0.25)why.push('dark moon');
+    if(isNight&&illum>0.75)why.push('bright moon');
+    if(isNight&&light>0.4)why.push('pier-light window');
+    if(season>0.88)why.push('peak season');
+    if(rain>0.4||precipProb>0.45)why.push('rain risk');
+    if(sst<11.5||sst>19.5)why.push('SST extreme');
+
+    const r={t,p,tide,phase,wind,wd,gust,wave,swell,period,cur,sst,clarity,light,highProx,onshore,illum,season,why,rain,precipProb,pressure,cloud,airT,apparent,vis};
+    rows.push(r);
+    if(!best||p>best.p)best=r;
+  }
+  return{rows,best};
+}
+
+function recommendationText(best){
+  const p=best.p, clar=best.clarity, wind=best.wind;
+  if(p>=78&&clar>0.65&&wind<18)
+    return{cls:'go',txt:'Excellent window — conditions line up well. Worth prioritising this period if you can get to the pier.'};
+  if(p>=62&&clar>0.5)
+    return{cls:'go',txt:'Solid chance. Water should be reasonably clear with usable light/tide. Good session potential around structure.'};
+  if(p>=45)
+    return{cls:'maybe',txt:'Marginal. Worth it if you are already local and keen; not a strong “drive from Melbourne” signal.'};
+  if(clar<0.35||wind>26)
+    return{cls:'no',txt:'Poor outlook. Clarity or wind looks unfavourable. Better to wait for a cleaner, lighter window.'};
+  return{cls:'no',txt:'Low probability. Common sense suggests staying home unless you simply want time on the pier.'};
+}
+
+function visLabel(m){
+  const km=m/1000;
+  if(km>=40)return km.toFixed(0)+' km · excellent';
+  if(km>=20)return km.toFixed(0)+' km · good';
+  if(km>=10)return km.toFixed(0)+' km · moderate';
+  return km.toFixed(1)+' km · reduced';
+}
+
+function render(w,m,c,errs){
+  if(!w?.hourly?.time){
+    setStatus('bad','No weather data','The weather endpoint returned nothing usable.');
+    return;
+  }
+  const{rows,best}=makeRows(w,m,c);
+
+  $('bestTime').textContent=best.t.toLocaleString('en-AU',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:TZ});
+  $('bestPct').textContent=best.p.toFixed(0)+'%';
+  $('bar').style.width=best.p+'%';
+  $('bestWhy').textContent=best.why.length?best.why.join(' · '):'mixed conditions';
+
+  const rec=recommendationText(best);
+  const recEl=$('recommendation');
+  recEl.style.display='block';
+  recEl.className='rec '+rec.cls;
+  recEl.textContent=rec.txt;
+
+  $('rows').innerHTML=rows.map(r=>{
+    const cls=r.p>=68?'g':r.p>=42?'y':'r';
+    const lightL=r.light>0.58?'Twilight':r.light>0.3?'Low':(r.t.getHours()>=20||r.t.getHours()<5?'Night':'Day');
+    const windStr=r.wind.toFixed(0)+' '+fmtDir(r.wd);
+    const seaStr=r.wave.toFixed(1)+(r.swell>0.25?' / S'+r.swell.toFixed(1):'')+' m';
+    const clarCls=r.clarity>=0.7?'g':r.clarity>=0.45?'y':'r';
+    return`<tr>
+      <td>${r.t.toLocaleString('en-AU',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:TZ})}</td>
+      <td class="pct ${cls}">${r.p.toFixed(0)}%</td>
+      <td>${lightL}</td>
+      <td>${r.phase}</td>
+      <td>${windStr}</td>
+      <td>${seaStr}</td>
+      <td>${r.sst.toFixed(1)}°</td>
+      <td class="${clarCls}">${(r.clarity*100).toFixed(0)}%</td>
+      <td>${r.why.map(w=>`<span class="tag">${w}</span>`).join('')||'<span class="tag">mixed</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  const n=rows[0];
+  const stats=[
+    {k:'Now score',v:n.p.toFixed(0)+'%'},
+    {k:'Water clarity',v:(n.clarity*100).toFixed(0)+'%',note:'Estimated water clarity (most important)'},
+    {k:'Light window',v:(n.light*100).toFixed(0)+'%'},
+    {k:'Tide',v:n.phase+(n.highProx>0.5?' · near high':'')},
+    {k:'Wind',v:n.wind.toFixed(0)+' km/h '+fmtDir(n.wd)},
+    {k:'Gusts',v:n.gust.toFixed(0)+' km/h'},
+    {k:'Onshore component',v:(n.onshore*100).toFixed(0)+'%'},
+    {k:'Wave / swell',v:n.wave.toFixed(1)+' / '+n.swell.toFixed(1)+' m'},
+    {k:'Current',v:n.cur.toFixed(1)+' km/h'},
+    {k:'Sea temperature',v:n.sst.toFixed(1)+' °C'},
+    {k:'Air / feels like',v:n.airT.toFixed(0)+'° / '+n.apparent.toFixed(0)+'°'},
+    {k:'Air visibility',v:visLabel(n.vis),note:'How far you can see through the air — not water clarity'},
+    {k:'Moon illumination',v:(n.illum*100).toFixed(0)+'%'},
+    {k:'Season factor',v:(n.season*100).toFixed(0)+'%'},
+    {k:'Pressure',v:n.pressure.toFixed(0)+' hPa'},
+    {k:'Cloud cover',v:(n.cloud*100).toFixed(0)+'%'},
+    {k:'Rain risk',v:(n.precipProb*100).toFixed(0)+'%'},
+    {k:'Marine model',v:m?'Live':'Fallback'}
+  ];
+  $('stats').innerHTML=stats.map(s=>`
+    <div class="stat">
+      <div class="k">${s.k}</div>
+      <div class="v">${s.v}</div>
+      ${s.note?`<div class="note">${s.note}</div>`:''}
+    </div>`).join('');
+
+  $('updated').textContent='Updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit',timeZone:TZ});
+
+  if(errs.length)setStatus('wait','Partial data',errs.join(' · '));
+  else setStatus('ok','Live data loaded','Weather and marine feeds OK. Model running.');
+}
+
+async function refresh(){
+  const c=cfg();
+  $('lat').value=c.lat;$('lon').value=c.lon;$('shore').value=c.shore;
+  setStatus('wait','Loading…','Connecting to live feeds…');
+  $('errors').textContent='';
+  setSrc('weather','wait','…');setSrc('marine','wait','…');setSrc('tide','wait','…');
+
+  const base=`latitude=${c.lat}&longitude=${c.lon}&timezone=${encodeURIComponent(TZ)}&forecast_days=3`;
+  const weather=`https://api.open-meteo.com/v1/forecast?${base}&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,rain,showers,weather_code,surface_pressure,cloud_cover,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m`;
+  const marine=`https://marine-api.open-meteo.com/v1/marine?${base}&hourly=wave_height,wave_direction,wave_period,wave_peak_period,wind_wave_height,wind_wave_direction,wind_wave_period,swell_wave_height,swell_wave_direction,swell_wave_period,sea_surface_temperature,ocean_current_velocity,ocean_current_direction,sea_level_height_msl&cell_selection=sea`;
+
+  const[a,b]=await Promise.allSettled([fetchJSON(weather),fetchJSON(marine)]);
+  let w=a.status==='fulfilled'?a.value:null;
+  let m=b.status==='fulfilled'?b.value:null;
+  const errs=[];
+
+  if(w)setSrc('weather','ok','Live');
+  else{setSrc('weather','fail','Failed');errs.push('Weather: '+(a.reason?.message||'fail'))}
+
+  if(m){
+    setSrc('marine','ok','Live');
+    const hasTide=!!m.hourly?.sea_level_height_msl;
+    setSrc('tide',hasTide?'ok':'fail',hasTide?'Modelled':'None');
+  }else{
+    setSrc('marine','fail','Failed');setSrc('tide','fail','—');
+    errs.push('Marine: '+(b.reason?.message||'fail'));
+  }
+  $('errors').textContent=errs.join(' · ');
+  if(w)render(w,m,c,errs);
+  else setStatus('bad','Cannot load data','Weather request failed. Host the file on a real web address (Netlify account, Tiiny, Cloudflare Pages) then refresh.');
+}
+
+$('refreshBtn').onclick=refresh;
+$('factorBtn').onclick=()=>{$('factors').classList.toggle('show');$('factorBtn').textContent=$('factors').classList.contains('show')?'Hide model notes':'How the model works'};
+$('settingsBtn').onclick=()=>$('settings').classList.toggle('show');
+$('saveBtn').onclick=()=>{localStorage.setItem(LATKEY,$('lat').value);localStorage.setItem(LONKEY,$('lon').value);localStorage.setItem(SHOREKEY,$('shore').value);$('settings').classList.remove('show');refresh()};
+
+(function(){if(location.protocol!=='file:'){const el=$('installHint');if(el)el.style.display='none'}})();
+
+refresh();
+setInterval(refresh,12*60*1000);
+</script>
+</body>
+</html>
